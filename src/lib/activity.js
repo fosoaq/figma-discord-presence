@@ -1,5 +1,5 @@
 const EventEmitter = require("events");
-const RPC = require("discord-rpc");
+const { Client } = require("@xhayper/discord-rpc");
 
 const {
   getIsFigmaRunning,
@@ -19,15 +19,11 @@ class Activity extends EventEmitter {
     this.client = null;
     this.setActivityInterval = null;
     this.startTime = null;
-
-    // if (config.get("connectOnStartup")) {
-    //   this.login();
-    // }
   }
 
   async login() {
     this.emit(events.DISCORD_CONNECTING);
-    this.client = new RPC.Client({ transport: "ipc" });
+    this.client = new Client({ clientId: CLIENT_ID });
 
     this.client.on("ready", () => {
       this.emit(events.DISCORD_READY);
@@ -41,7 +37,7 @@ class Activity extends EventEmitter {
     });
 
     try {
-      await this.client.login({ clientId: CLIENT_ID });
+      await this.client.login();
     } catch (err) {
       logger.error("activity", err.message);
       this.emit(events.DISCORD_LOGIN_ERROR);
@@ -60,7 +56,7 @@ class Activity extends EventEmitter {
           this.startTime = new Date();
         }
       } else {
-        await this.client.clearActivity();
+        await this.client.user?.clearActivity();
         this.startTime = null;
         return;
       }
@@ -85,9 +81,7 @@ class Activity extends EventEmitter {
         !isHideFilenames ? `in: "${currentFigmaFilename}"` : undefined,
       ];
 
-      // You'll need to have the logo asset uploaded to
-      // https://discord.com/developers/applications/<application_id>/rich-presence/assets
-      this.client.setActivity({
+      await this.client.user?.setActivity({
         details: details.join("") || undefined,
         startTimestamp: this.startTime,
         largeImageKey: "logo",
@@ -96,7 +90,6 @@ class Activity extends EventEmitter {
           !isHideViewButton && shareLink
             ? [{ label: "View in Figma", url: shareLink }]
             : undefined,
-        instance: false,
       });
     } catch (err) {
       logger.error("activity", `Failed to setActivity: ${err}`);
@@ -129,8 +122,8 @@ class Activity extends EventEmitter {
 
   async destroy() {
     try {
-      await this.client.clearActivity();
-      await this.client.destroy();
+      await this.client?.user?.clearActivity();
+      await this.client?.destroy();
     } catch {}
 
     this.client = null;

@@ -1,7 +1,7 @@
 {
   "name": "figma-discord-presence",
   "productName": "Figma Discord Presence",
-  "version": "1.2.6",
+  "version": "2.0.0",
   "description": "Discord Rich Presence for Figma",
   "main": "src/main.js",
   "scripts": {
@@ -10,10 +10,7 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder --mac --windows",
     "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --windows",
-    "publish": "electron-builder --mac --windows --publish always",
-    "publish:mac": "electron-builder --mac --publish always",
-    "publish:win": "electron-builder --windows --publish always"
+    "dist:win": "electron-builder --windows"
   },
   "repository": "",
   "keywords": [
@@ -30,20 +27,19 @@
     "@bberger/win-info-fork": "^0.2.14",
     "@sentry/electron": "^2.5.1",
     "@sentry/integrations": "^6.10.0",
-    "bplist-parser": "^0.3.0",
     "convict": "^6.2.0",
-    "discord-rpc": "^4.0.1",
+    "@xhayper/discord-rpc": "^1.3.0",
     "dotenv": "^10.0.0",
     "electron-log": "^4.3.5",
-    "electron-notarize": "^1.0.0",
+    "@electron/notarize": "^2.2.1",
     "electron-updater": "^4.4.1",
     "fs-extra": "^10.0.0",
     "lodash": "^4.17.21",
     "ps-list": "^7.2.0"
   },
   "devDependencies": {
-    "electron": "^13.1.7",
-    "electron-builder": "^22.11.8"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "asar": true,
@@ -55,22 +51,19 @@
       "icon": "./build/icon.ico"
     },
     "mac": {
-      "hardenedRuntime": true,
-      "entitlements": "./build/entitlements.mac.plist",
-      "entitlementsInherit": "./build/entitlements.mac.plist",
+      "hardenedRuntime": false,
+      "identity": null,
       "icon": "./build/icon.icns",
       "target": [
         {
-          "target": "dmg"
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
         },
         {
-          "target": "zip"
+          "target": "zip",
+          "arch": ["x64", "arm64"]
         }
       ]
-    },
-    "publish": {
-      "provider": "s3",
-      "bucket": "figma-discord-presence"
     }
   }
 }

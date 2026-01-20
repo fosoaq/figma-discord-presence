@@ -5,10 +5,8 @@ const logger = require("./logger");
 autoUpdater.autoDownload = false;
 
 autoUpdater.on("error", (error) => {
-  dialog.showErrorBox(
-    "Error: ",
-    error == null ? "unknown" : (error.stack || error).toString()
-  );
+  // Silently ignore update errors (e.g., no update server configured)
+  logger.debug("updater", `Update error: ${error?.message || "unknown"}`);
 });
 
 autoUpdater.on("update-available", async () => {
@@ -50,7 +48,17 @@ autoUpdater.on("download-progress", (progressObj) =>
 );
 
 async function _simpleCheck() {
-  const { updateInfo } = await _update();
+  const result = await _update();
+  if (!result?.updateInfo) {
+    await dialog.showMessageBox({
+      type: "info",
+      message: "Auto-update not available",
+      detail: "Check GitHub releases for new versions.",
+    });
+    return;
+  }
+
+  const { updateInfo } = result;
   const currentVersion = app.getVersion();
 
   logger.debug(
@@ -58,27 +66,24 @@ async function _simpleCheck() {
     `Current Version: ${currentVersion} | Server Version: ${updateInfo.version}`
   );
 
-  if (updateInfo && updateInfo.version === currentVersion) {
+  if (updateInfo.version === currentVersion) {
     await dialog.showMessageBox({
       type: "info",
       message: "You're up-to-date!",
-      detail: `${app.getName()} ${
-        updateInfo.version
-      } is currently the newest version available.`,
+      detail: `${app.getName()} ${updateInfo.version} is currently the newest version available.`,
     });
   }
 }
 
 async function _update() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      autoUpdater.logger = logger.log;
-      // return resolve(autoUpdater.checkForUpdatesAndNotify());
-      return resolve(autoUpdater.checkForUpdates());
-    } catch (err) {
-      reject(err);
-    }
-  });
+  try {
+    autoUpdater.logger = logger.log;
+    return await autoUpdater.checkForUpdates();
+  } catch (err) {
+    // Auto-updater not configured, skip silently
+    logger.debug("updater", "Auto-update not available");
+    return null;
+  }
 }
 
 exports.update = _update;

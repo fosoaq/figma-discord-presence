@@ -1,57 +1,51 @@
 # Figma Discord Presence
 
-[![Build/release](https://github.com/bryanberger/figma-discord-presence/actions/workflows/deploy.yml/badge.svg)](https://github.com/bryanberger/figma-discord-presence/actions/workflows/deploy.yml)
+> Update your Discord activity status with rich presence from Figma.
 
-<a href="https://www.producthunt.com/posts/figma-discord-presence?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-figma-discord-presence" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=305303&theme=dark" alt="Figma Discord Presence - Adds rich presence activity to Discord for Figma | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-
-> Update your discord activity status with a rich presence from Figma.
-> Supports Windows and MacOS
+This is a maintained fork of [bryanberger/figma-discord-presence](https://github.com/bryanberger/figma-discord-presence) with fixes for modern macOS/Windows and Figma versions.
 
 ![demo](.github/demo.png?raw=true)
+
+## Download
+
+Download the latest version from [Releases](https://github.com/fosoaq/figma-discord-presence/releases):
+
+- **macOS (Apple Silicon):** `Figma Discord Presence-x.x.x-arm64.dmg`
+- **macOS (Intel):** `Figma Discord Presence-x.x.x.dmg`
+- **Windows:** `Figma Discord Presence Setup x.x.x.exe`
+
+> Note: macOS builds are unsigned. On first launch, right-click the app and select "Open" to bypass Gatekeeper warning.
+
+## What's Fixed
+
+The original project was abandoned and stopped working on modern systems. This fork fixes:
+
+- Updated Discord RPC library (`@xhayper/discord-rpc`) - the old one no longer compiles
+- Fixed Figma file detection - now reads directly from Figma's `settings.json` instead of deprecated `windows.plist`
+- Updated Electron to v28 for compatibility with modern Node.js
+- Removed deprecated dependencies
 
 ## Features
 
 - Shows what you're working on in Figma
-- Menubar application for convenient control and configuration
-- Privacy configuration options for hiding filenames, activity status, and Figma view buttons
-- Idle and active indication if you have tabbed out or are actively using Figma
-- Respects Discords 15s status update limit, but, privacy options set immediately
-- Support for manually reconnecting to the Discord Gateway
-- Support for enabling or disabling presence reporting at will
+- Menubar/tray application for convenient control and configuration
+- Privacy options for hiding filenames, activity status, and Figma view buttons
+- Idle and active indication based on Figma focus state
+- Manual reconnect to Discord Gateway
+- Enable/disable presence reporting at will
 
-## How does it work?
+## Requirements
 
-Figma does not support a native way to monitor the application state in the background (yet?), but, it does drop some state files on your machine.
+- macOS or Windows
+- Figma Desktop app
+- Discord with Activity Status enabled
 
-This application periodically reads those files checking for updates and combines some information to determine whether Figma is in the foreground, what the current active file is, and a share link to that file.
-
-Every ~15s your Figma activity is reported to Discord via the Discord RPC protocol.
-
-## Troubleshooting
-
-> Linux is currently not supported.
-> This application requires Figma Desktop.
-> Ensure that you have your activity status enabled in Discord, or your activity won't be visible to anyone.
-
-**MacOS:**
-
-- MacOS may ask for permission to control other apps. It is required to enable and communicate with Figma and Discord.
-- This application assumes you install Figma Desktop normally, and have not changed or modified it in any way
-- `~/Library/Saved\ Application\ State/com.figma.Desktop.savedState/windows.plist` must exist
-- `~/Library/Application\ Support/Figma/settings.json` must exist
-- It may take a few seconds for your activity to update to show the latest active/idle status and filename in Discord. Figma's `savedState` does not update in realtime. We could watch this file for changes and update your Discord activity when it does but since we try to honor Discord's 15s activity update limit, we currently just wait for the next tick to update your activity.
-
-## Development
+## Building from Source
 
 ```bash
 # Clone this repository
-git clone https://github.com/bryanberger/figma-discord-presence
-
-# Change directory
+git clone https://github.com/fosoaq/figma-discord-presence
 cd figma-discord-presence
-
-# Copy and edit env vars
-cp .env.example .env
 
 # Install dependencies
 npm install
@@ -59,39 +53,21 @@ npm install
 # Run the app
 npm start
 
-# Build the electron binaries
-npm run dist
-
-# Publish (using the S3 Provider, make sure you're authenticated and have a bucket setup)
-npm run publish
+# Build distributables
+npm run dist:mac   # macOS
+npm run dist:win   # Windows
 ```
 
-## Release
+## Troubleshooting
 
-This project uses Github Actions to build for Windows and Mac. Upon successful build, if a git tag exists it will publish to S3 (given you've provided the proper access tokens).
-
-When you want to create a new release, follow these steps:
-
-- Update the version in your project's package.json file (e.g. 1.2.3)
-- Commit that change (git commit -am v1.2.3)
-- Tag your commit (git tag v1.2.3). Make sure your tag name's format is v*.*.*. Your workflow will use this tag to detect when to create a release
-- Push your changes to GitHub (git push && git push --tags)
-
-After building successfully, the action will publish your release artifacts.
-
-## Contributing
-To contribute to this repository, feel free to create a new fork of the repository and submit a pull request.
-
-1. Fork / Clone and select the `master` branch.
-2. Create a new branch in your fork.
-3. Make your changes.
-4. Commit your changes, and push them.
-5. Submit a Pull Request [here](https://github.com/bryanberger/figma-discord-presence/pulls)!
-
-## Notice
-
-While I am a Discord employee, this is by no way endorsed as an "official" integration with Figma. This is a personal project and is actually kind of a hacky solution to bring Rich Presence for Figma to Discord.
+- **Activity not showing in Discord?** Make sure Activity Status is enabled in Discord settings (Settings → Activity Privacy → Share your activity)
+- **macOS permission prompts?** The app needs permission to detect active windows - grant it in System Preferences → Privacy & Security → Accessibility
+- **Figma file not detected?** Make sure Figma Desktop is installed and has been opened at least once
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Credits
+
+Original project by [Bryan Berger](https://github.com/bryanberger).
