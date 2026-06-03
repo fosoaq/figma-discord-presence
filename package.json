@@ -9,10 +9,10 @@
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --mac --windows",
-    "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --windows"
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --windows --publish never"
   },
-  "repository": "",
+  "repository": "https://github.com/fosoaq/figma-discord-presence",
   "keywords": [
     "discord",
     "figma",
@@ -42,6 +42,11 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "fosoaq",
+      "repo": "figma-discord-presence"
+    },
     "asar": true,
     "appId": "com.bryanberger.figma-discord-presence",
     "productName": "Figma Discord Presence",

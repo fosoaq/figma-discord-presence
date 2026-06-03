@@ -32,6 +32,7 @@ jobs:
             dist/*.dmg
             dist/*.zip
             dist/*.blockmap
+            dist/latest*.yml
           if-no-files-found: error
 
   build-windows:
@@ -58,6 +59,7 @@ jobs:
           path: |
             dist/*.exe
             dist/*.blockmap
+            dist/latest*.yml
           if-no-files-found: error
 
   release:
