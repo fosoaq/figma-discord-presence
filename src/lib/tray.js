@@ -1,6 +1,6 @@
 const EventEmitter = require("events");
 const path = require("path");
-const { shell, nativeTheme, Menu, Tray } = require("electron");
+const { app, shell, nativeTheme, Menu, Tray } = require("electron");
 
 const config = require("./config");
 const logger = require("./logger");
@@ -43,13 +43,21 @@ class CustomTray extends EventEmitter {
           click: (menuItem) =>
             this.saveConfigAndUpdate("hideViewButton", menuItem.checked),
         },
-        // {
-        //   label: "Connect to Discord when this app starts",
-        //   type: "checkbox",
-        //   checked: config.get("connectOnStartup"),
-        //   click: (menuItem) =>
-        //     this.saveConfigAndUpdate("connectOnStartup", menuItem.checked),
-        // },
+        {
+          label: "Connect to Discord when this app starts",
+          type: "checkbox",
+          checked: config.get("connectOnStartup"),
+          click: (menuItem) =>
+            this.saveConfigAndUpdate("connectOnStartup", menuItem.checked),
+        },
+        {
+          label: "Launch at login",
+          type: "checkbox",
+          checked: app.getLoginItemSettings().openAtLogin,
+          click: (menuItem) => {
+            app.setLoginItemSettings({ openAtLogin: menuItem.checked });
+          },
+        },
       ],
     },
 

@@ -12,6 +12,10 @@ const events = require("./events");
 
 const CLIENT_ID = "866719067092418580";
 
+const RECONNECT_BASE_DELAY = 5000;
+const RECONNECT_MAX_DELAY = 60000;
+const RECONNECT_MAX_ATTEMPTS = 10;
+
 class Activity extends EventEmitter {
   constructor() {
     super();
@@ -19,6 +23,9 @@ class Activity extends EventEmitter {
     this.client = null;
     this.setActivityInterval = null;
     this.startTime = null;
+    this.reconnectAttempts = 0;
+    this.reconnectTimer = null;
+    this.isManualDisconnect = false;
   }
 
   async login() {
@@ -26,6 +33,7 @@ class Activity extends EventEmitter {
     this.client = new Client({ clientId: CLIENT_ID });
 
     this.client.on("ready", () => {
+      this.reconnectAttempts = 0;
       this.emit(events.DISCORD_READY);
       this.setActivity();
       this.startInterval();
@@ -33,7 +41,11 @@ class Activity extends EventEmitter {
 
     this.client.on("disconnected", () => {
       this.emit(events.DISCORD_DISCONNECTED);
-      this.destroy();
+      this.client = null;
+      this.stopInterval();
+      if (!this.isManualDisconnect) {
+        this.scheduleReconnect();
+      }
     });
 
     try {
@@ -61,7 +73,7 @@ class Activity extends EventEmitter {
         return;
       }
 
-      const { currentFigmaFilename, shareLink } = await getFigmaMetaData();
+      const { currentFigmaFilename, shareLink, editorType, isBranch } = await getFigmaMetaData();
 
       if (currentFigmaFilename === null) {
         return;
@@ -74,21 +86,30 @@ class Activity extends EventEmitter {
       const isHideStatus = config.get("hideStatus");
       const isHideViewButton = config.get("hideViewButton");
 
+      const isFigJam = editorType === "figjam";
+      const largeImageKey = isFigJam ? "figjam" : "logo";
+      const largeImageText = isFigJam ? "Jamming in FigJam" : "Designing in Figma";
+      const viewButtonLabel = isFigJam ? "View in FigJam" : "View in Figma";
+
       // Build detail string
+      const statusText = !isHideStatus ? (isFigmaActive ? "Active" : "Idle") : "";
+      const fileText = !isHideFilenames
+        ? `${isBranch ? "[branch] " : ""}${currentFigmaFilename}`
+        : null;
       const details = [
-        !isHideStatus ? (isFigmaActive ? "Active" : "Idle") : "",
-        `${!isHideStatus && !isHideFilenames ? " " : ""}`,
-        !isHideFilenames ? `in: "${currentFigmaFilename}"` : undefined,
-      ];
+        statusText,
+        statusText && fileText ? " " : "",
+        fileText ? `in: "${fileText}"` : "",
+      ].join("") || undefined;
 
       await this.client.user?.setActivity({
-        details: details.join("") || undefined,
+        details,
         startTimestamp: this.startTime,
-        largeImageKey: "logo",
-        largeImageText: "Designing in Figma",
+        largeImageKey,
+        largeImageText,
         buttons:
           !isHideViewButton && shareLink
-            ? [{ label: "View in Figma", url: shareLink }]
+            ? [{ label: viewButtonLabel, url: shareLink }]
             : undefined,
       });
     } catch (err) {
@@ -96,10 +117,31 @@ class Activity extends EventEmitter {
     }
   }
 
+  scheduleReconnect() {
+    if (this.reconnectAttempts >= RECONNECT_MAX_ATTEMPTS) {
+      logger.debug("activity", "max reconnect attempts reached, giving up");
+      this.reconnectAttempts = 0;
+      return;
+    }
+
+    const delay = Math.min(
+      RECONNECT_BASE_DELAY * Math.pow(2, this.reconnectAttempts),
+      RECONNECT_MAX_DELAY
+    );
+    this.reconnectAttempts++;
+    logger.debug("activity", `reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null;
+      await this.login();
+    }, delay);
+  }
+
   startInterval() {
+    const intervalMs = (config.get("updateInterval") || 15) * 1000;
     this.setActivityInterval = setInterval(() => {
       this.setActivity();
-    }, 15e3);
+    }, intervalMs);
   }
 
   async stopInterval() {
@@ -113,14 +155,22 @@ class Activity extends EventEmitter {
   }
 
   async connect() {
+    this.isManualDisconnect = false;
+    this.reconnectAttempts = 0;
     await this.login();
   }
 
   async disconnect() {
+    this.isManualDisconnect = true;
     await this.destroy();
   }
 
   async destroy() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     try {
       await this.client?.user?.clearActivity();
       await this.client?.destroy();

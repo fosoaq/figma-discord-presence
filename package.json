@@ -1,7 +1,7 @@
 {
   "name": "figma-discord-presence",
   "productName": "Figma Discord Presence",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Discord Rich Presence for Figma",
   "main": "src/main.js",
   "scripts": {
@@ -42,6 +42,7 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
+    "publish": "never",
     "asar": true,
     "appId": "com.bryanberger.figma-discord-presence",
     "productName": "Figma Discord Presence",

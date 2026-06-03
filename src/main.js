@@ -39,6 +39,11 @@ app
   .then(() => (tray = new CustomTray(state)))
   .then(() => (activity = new Activity()))
   .then(() => registerEvents())
+  .then(() => {
+    if (config.get("connectOnStartup")) {
+      activity.connect();
+    }
+  })
   .then(() => logger.debug("main", "initalized!"))
   .catch((err) => logger.error("main", err.message));
 

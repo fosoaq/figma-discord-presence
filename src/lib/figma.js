@@ -12,22 +12,42 @@ function getSettingsPath() {
   return `${util.getPath("appData")}/Figma/settings.json`;
 }
 
+// Cache for settings.json contents — invalidated by mtime
+let cachedSettings = null;
+let cachedMtime = 0;
+
+function readSettings() {
+  const settingsPath = getSettingsPath();
+
+  try {
+    const stat = fs.statSync(settingsPath);
+    const mtime = stat.mtimeMs;
+
+    if (cachedSettings !== null && mtime === cachedMtime) {
+      return cachedSettings;
+    }
+
+    const raw = fs.readFileSync(settingsPath, "utf-8");
+    cachedSettings = JSON.parse(raw);
+    cachedMtime = mtime;
+    return cachedSettings;
+  } catch (err) {
+    logger.error("figma", err.message);
+    return null;
+  }
+}
+
 async function getFigmaMetaData() {
   let currentFigmaFilename = null;
   let shareLink = null;
+  let editorType = "design";
+  let isBranch = false;
 
   try {
-    const settingsPath = getSettingsPath();
+    const figmaData = readSettings();
 
-    if (!fs.existsSync(settingsPath)) {
-      return { currentFigmaFilename, shareLink };
-    }
-
-    const figmaDataFile = fs.readFileSync(settingsPath, "utf-8");
-    const figmaData = JSON.parse(figmaDataFile);
-
-    if (!figmaData.windows || figmaData.windows.length === 0) {
-      return { currentFigmaFilename, shareLink };
+    if (!figmaData || !figmaData.windows || figmaData.windows.length === 0) {
+      return { currentFigmaFilename, shareLink, editorType, isBranch };
     }
 
     // Find the most recently viewed tab across all windows
@@ -54,12 +74,14 @@ async function getFigmaMetaData() {
           `https://www.figma.com${path}${params ? params : ""}`
         );
       }
+      editorType = activeTab.editorType || "design";
+      isBranch = activeTab.isBranch || false;
     }
   } catch (err) {
     logger.error("figma", err.message);
   }
 
-  return { currentFigmaFilename, shareLink };
+  return { currentFigmaFilename, shareLink, editorType, isBranch };
 }
 
 async function getIsFigmaRunning() {

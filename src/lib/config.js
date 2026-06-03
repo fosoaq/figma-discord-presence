@@ -22,11 +22,16 @@ const conf = convict({
     default: true,
     format: "Boolean",
   },
-  // connectOnStartup: {
-  //   doc: "Connect to Discord on application startup",
-  //   default: true,
-  //   format: "Boolean",
-  // },
+  connectOnStartup: {
+    doc: "Connect to Discord on application startup",
+    default: true,
+    format: "Boolean",
+  },
+  updateInterval: {
+    doc: "How often to update Discord presence (in seconds)",
+    default: 15,
+    format: Number,
+  },
 });
 
 function load() {

@@ -27,11 +27,14 @@ The original project was abandoned and stopped working on modern systems. This f
 
 ## Features
 
-- Shows what you're working on in Figma
+- Shows what you're working on in Figma and FigJam (with separate icons and status text)
+- Branch indicator — shows `[branch]` in filename when working on a Figma branch
 - Menubar/tray application for convenient control and configuration
-- Privacy options for hiding filenames, activity status, and Figma view buttons
+- Privacy options for hiding filenames, activity status, and view buttons
 - Idle and active indication based on Figma focus state
-- Manual reconnect to Discord Gateway
+- Auto-reconnect to Discord with exponential backoff (up to 10 attempts)
+- Connect to Discord on startup (configurable)
+- Launch at login support
 - Enable/disable presence reporting at will
 
 ## Requirements
