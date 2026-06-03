@@ -42,7 +42,6 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "publish": "never",
     "asar": true,
     "appId": "com.bryanberger.figma-discord-presence",
     "productName": "Figma Discord Presence",
